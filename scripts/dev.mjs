@@ -2,11 +2,15 @@ import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { loadLocalEnv } from '../server/shared/loadEnv.mjs';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
 const viteCliPath = path.join(rootDir, 'node_modules', 'vite', 'bin', 'vite.js');
 const nodeExecutable = process.execPath;
 const childProcesses = [];
+
+loadLocalEnv();
 
 function startProcess(command, args, env = process.env) {
   const child = spawn(command, args, {

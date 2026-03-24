@@ -4,7 +4,11 @@ import { createReadStream, existsSync } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
-import {
+import { loadLocalEnv } from './shared/loadEnv.mjs';
+
+loadLocalEnv();
+
+const {
   authenticateWithCredentials,
   authenticateWithToken,
   getAdminContent,
@@ -14,7 +18,7 @@ import {
   recordAnalyticsEvent,
   saveAdminContent,
   updateAdminCredentials,
-} from './shared/storage.mjs';
+} = await import('./shared/storage.mjs');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');

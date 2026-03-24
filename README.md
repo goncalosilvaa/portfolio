@@ -19,7 +19,7 @@ This portfolio is a Vite + React app with a private dashboard for:
 
 ## Environment Variables
 
-Create a `.env` file from [`.env.example`](./.env.example).
+Create a `.env.local` file from [`.env.example`](./.env.example).
 
 Required for production on Vercel:
 
@@ -51,6 +51,8 @@ This starts:
 
 - Vite on the frontend
 - the local API server on port `3001`
+
+The local Node server now auto-loads `.env.local` and `.env`, so you can point development directly at Neon with `DATABASE_URL`.
 
 If no Postgres connection string is configured, the API uses the JSON files in [`server/data`](./server/data).
 
