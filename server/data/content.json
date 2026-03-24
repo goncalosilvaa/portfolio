@@ -1,0 +1,163 @@
+{
+  "projects": [
+    {
+      "id": "musify",
+      "title": "Full stack music app",
+      "summary": "Music discovery platform with authentication, playlists, and a polished responsive UI.",
+      "image": "/images/project-1.jpg",
+      "link": "https://musify-5al0.onrender.com/",
+      "tags": [
+        "API",
+        "MVC",
+        "Development"
+      ],
+      "published": true,
+      "createdAt": "2026-03-24T17:44:05.876Z",
+      "updatedAt": "2026-03-24T17:44:05.876Z"
+    },
+    {
+      "id": "pixstock",
+      "title": "Free stock photo app",
+      "summary": "Image search experience powered by external APIs with a clean single-page flow.",
+      "image": "/images/project-2.jpg",
+      "link": "https://pixstock-official.vercel.app/",
+      "tags": [
+        "API",
+        "SPA"
+      ],
+      "published": true,
+      "createdAt": "2026-03-24T17:44:05.876Z",
+      "updatedAt": "2026-03-24T17:44:05.876Z"
+    },
+    {
+      "id": "recipe-app",
+      "title": "Recipe app",
+      "summary": "Recipe browsing interface focused on fast filtering, saved ideas, and easy exploration.",
+      "image": "/images/project-3.jpg",
+      "link": "",
+      "tags": [
+        "Development",
+        "API"
+      ],
+      "published": true,
+      "createdAt": "2026-03-24T17:44:05.876Z",
+      "updatedAt": "2026-03-24T17:44:05.876Z"
+    },
+    {
+      "id": "wealthome",
+      "title": "Real estate website",
+      "summary": "Marketing website concept for real estate listings with an editorial visual direction.",
+      "image": "/images/project-4.jpg",
+      "link": "https://github.com/codewithsadee-org/wealthome",
+      "tags": [
+        "Web Design",
+        "Development"
+      ],
+      "published": true,
+      "createdAt": "2026-03-24T17:44:05.876Z",
+      "updatedAt": "2026-03-24T17:44:05.876Z"
+    },
+    {
+      "id": "anon-commerce",
+      "title": "eCommerce website",
+      "summary": "Storefront experience with strong product presentation and conversion-focused layouts.",
+      "image": "/images/project-5.jpg",
+      "link": "https://github.com/codewithsadee/anon-ecommerce-website",
+      "tags": [
+        "eCommerce",
+        "Development"
+      ],
+      "published": true,
+      "createdAt": "2026-03-24T17:44:05.876Z",
+      "updatedAt": "2026-03-24T17:44:05.876Z"
+    },
+    {
+      "id": "vcard-portfolio",
+      "title": "vCard personal portfolio",
+      "summary": "Personal site concept built to showcase projects, credibility, and contact paths.",
+      "image": "/images/project-6.jpg",
+      "link": "https://github.com/codewithsadee/vcard-personal-portfolio",
+      "tags": [
+        "Web Design",
+        "Development"
+      ],
+      "published": true,
+      "createdAt": "2026-03-24T17:44:05.876Z",
+      "updatedAt": "2026-03-24T17:44:05.876Z"
+    }
+  ],
+  "skills": [
+    {
+      "id": "figma",
+      "name": "Figma",
+      "description": "Design systems and interface prototyping",
+      "icon": "/images/figma.svg",
+      "category": "Design",
+      "createdAt": "2026-03-24T17:44:05.877Z",
+      "updatedAt": "2026-03-24T17:44:05.877Z"
+    },
+    {
+      "id": "css",
+      "name": "CSS",
+      "description": "Responsive user interface styling",
+      "icon": "/images/css3.svg",
+      "category": "Frontend",
+      "createdAt": "2026-03-24T17:44:05.877Z",
+      "updatedAt": "2026-03-24T17:44:05.877Z"
+    },
+    {
+      "id": "javascript",
+      "name": "JavaScript",
+      "description": "Interactive client-side experiences",
+      "icon": "/images/javascript.svg",
+      "category": "Frontend",
+      "createdAt": "2026-03-24T17:44:05.877Z",
+      "updatedAt": "2026-03-24T17:44:05.877Z"
+    },
+    {
+      "id": "nodejs",
+      "name": "NodeJS",
+      "description": "Backend services and APIs",
+      "icon": "/images/nodejs.svg",
+      "category": "Backend",
+      "createdAt": "2026-03-24T17:44:05.877Z",
+      "updatedAt": "2026-03-24T17:44:05.877Z"
+    },
+    {
+      "id": "expressjs",
+      "name": "ExpressJS",
+      "description": "REST APIs and server architecture",
+      "icon": "/images/expressjs.svg",
+      "category": "Backend",
+      "createdAt": "2026-03-24T17:44:05.877Z",
+      "updatedAt": "2026-03-24T17:44:05.877Z"
+    },
+    {
+      "id": "mongodb",
+      "name": "MongoDB",
+      "description": "Document database modeling",
+      "icon": "/images/mongodb.svg",
+      "category": "Database",
+      "createdAt": "2026-03-24T17:44:05.877Z",
+      "updatedAt": "2026-03-24T17:44:05.877Z"
+    },
+    {
+      "id": "react",
+      "name": "React",
+      "description": "Component-based frontend development",
+      "icon": "/images/react.svg",
+      "category": "Frontend",
+      "createdAt": "2026-03-24T17:44:05.877Z",
+      "updatedAt": "2026-03-24T17:44:05.877Z"
+    },
+    {
+      "id": "tailwindcss",
+      "name": "TailwindCSS",
+      "description": "Rapid UI styling and design systems",
+      "icon": "/images/tailwindcss.svg",
+      "category": "Frontend",
+      "createdAt": "2026-03-24T17:44:05.877Z",
+      "updatedAt": "2026-03-24T17:44:05.877Z"
+    }
+  ]
+}
