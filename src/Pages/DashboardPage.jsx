@@ -87,10 +87,21 @@ function buildEmptyProject() {
   return {
     id: '',
     title: '',
+    headline: '',
     summary: '',
+    overview: '',
+    idea: '',
+    design: '',
+    outcome: '',
     image: '/images/project-1.jpg',
     link: '',
+    year: '',
+    duration: '',
+    role: '',
     tagsInput: '',
+    paletteInput: '',
+    timelineInput: '',
+    galleryInput: '',
     published: true,
   };
 }
@@ -116,11 +127,60 @@ function buildEmptyReview() {
   };
 }
 
+function formatTimelineForInput(timeline = []) {
+  return timeline
+    .map((entry) => [entry.phase, entry.period, entry.summary].map((value) => `${value || ''}`.trim()).join(' | '))
+    .join('\n');
+}
+
+function parseTimelineInput(value = '') {
+  return value
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [phase = '', period = '', ...summaryParts] = line.split('|').map((part) => part.trim());
+
+      return {
+        phase,
+        period,
+        summary: summaryParts.join(' | ').trim(),
+      };
+    })
+    .filter((entry) => entry.phase || entry.period || entry.summary);
+}
+
+function formatGalleryForInput(gallery = []) {
+  return gallery
+    .map((entry) => [entry.src, entry.caption, entry.alt].map((value) => `${value || ''}`.trim()).join(' | '))
+    .join('\n');
+}
+
+function parseGalleryInput(value = '') {
+  return value
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [src = '', caption = '', ...altParts] = line.split('|').map((part) => part.trim());
+
+      return {
+        src,
+        caption,
+        alt: altParts.join(' | ').trim(),
+      };
+    })
+    .filter((entry) => entry.src);
+}
+
 function hydrateContentForForm(content) {
   return {
     projects: (content.projects || []).map((project) => ({
       ...project,
       tagsInput: Array.isArray(project.tags) ? project.tags.join(', ') : '',
+      paletteInput: Array.isArray(project.palette) ? project.palette.join(', ') : '',
+      timelineInput: formatTimelineForInput(project.timeline),
+      galleryInput: formatGalleryForInput(project.gallery),
     })),
     skills: (content.skills || []).map((skill) => ({ ...skill })),
     reviews: (content.reviews || []).map((review) => ({ ...review })),
@@ -129,13 +189,21 @@ function hydrateContentForForm(content) {
 
 function serializeContent(content) {
   return {
-    projects: content.projects.map(({ tagsInput, ...project }) => ({
-      ...project,
-      tags: tagsInput
-        .split(',')
-        .map((tag) => tag.trim())
-        .filter(Boolean),
-    })),
+    projects: content.projects.map(
+      ({ tagsInput, paletteInput, timelineInput, galleryInput, ...project }) => ({
+        ...project,
+        tags: tagsInput
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        palette: paletteInput
+          .split(',')
+          .map((color) => color.trim())
+          .filter(Boolean),
+        timeline: parseTimelineInput(timelineInput),
+        gallery: parseGalleryInput(galleryInput),
+      })
+    ),
     skills: content.skills.map((skill) => ({ ...skill })),
     reviews: content.reviews.map((review) => ({ ...review })),
   };
@@ -471,6 +539,17 @@ const ProjectEditor = ({ project, index, onChange, onRemove }) => (
       </div>
 
       <div className="md:col-span-2">
+        <label className="label">Detail page headline</label>
+        <input
+          className="text-field"
+          type="text"
+          value={project.headline}
+          onChange={(event) => onChange('headline', event.target.value)}
+          placeholder="Designing a polished music discovery experience from idea to launch."
+        />
+      </div>
+
+      <div className="md:col-span-2">
         <label className="label">Short summary</label>
         <textarea
           className="text-field min-h-28"
@@ -500,6 +579,116 @@ const ProjectEditor = ({ project, index, onChange, onRemove }) => (
           onChange={(event) => onChange('tagsInput', event.target.value)}
           placeholder="React, Node.js, API"
         />
+      </div>
+
+      <div>
+        <label className="label">Year</label>
+        <input
+          className="text-field"
+          type="text"
+          value={project.year}
+          onChange={(event) => onChange('year', event.target.value)}
+          placeholder="2026"
+        />
+      </div>
+
+      <div>
+        <label className="label">Duration</label>
+        <input
+          className="text-field"
+          type="text"
+          value={project.duration}
+          onChange={(event) => onChange('duration', event.target.value)}
+          placeholder="6 weeks"
+        />
+      </div>
+
+      <div className="md:col-span-2">
+        <label className="label">Role</label>
+        <input
+          className="text-field"
+          type="text"
+          value={project.role}
+          onChange={(event) => onChange('role', event.target.value)}
+          placeholder="Product design, frontend, backend"
+        />
+      </div>
+
+      <div className="md:col-span-2">
+        <label className="label">Overview</label>
+        <textarea
+          className="text-field min-h-28"
+          value={project.overview}
+          onChange={(event) => onChange('overview', event.target.value)}
+          placeholder="A broader introduction for the project detail page."
+        />
+      </div>
+
+      <div className="md:col-span-2">
+        <label className="label">Idea</label>
+        <textarea
+          className="text-field min-h-28"
+          value={project.idea}
+          onChange={(event) => onChange('idea', event.target.value)}
+          placeholder="Explain the original concept, goal, or problem to solve."
+        />
+      </div>
+
+      <div className="md:col-span-2">
+        <label className="label">Design</label>
+        <textarea
+          className="text-field min-h-28"
+          value={project.design}
+          onChange={(event) => onChange('design', event.target.value)}
+          placeholder="Describe the design direction, layout decisions, and visual approach."
+        />
+      </div>
+
+      <div className="md:col-span-2">
+        <label className="label">Outcome</label>
+        <textarea
+          className="text-field min-h-28"
+          value={project.outcome}
+          onChange={(event) => onChange('outcome', event.target.value)}
+          placeholder="Summarise the result, impact, or what the finished project achieved."
+        />
+      </div>
+
+      <div className="md:col-span-2">
+        <label className="label">Color palette</label>
+        <input
+          className="text-field"
+          type="text"
+          value={project.paletteInput}
+          onChange={(event) => onChange('paletteInput', event.target.value)}
+          placeholder="#0ea5e9, #111827, #f8fafc"
+        />
+      </div>
+
+      <div className="md:col-span-2">
+        <label className="label">Timeline</label>
+        <textarea
+          className="text-field min-h-36"
+          value={project.timelineInput}
+          onChange={(event) => onChange('timelineInput', event.target.value)}
+          placeholder="Discovery | Week 1 | User flows, scope, and references&#10;Design | Week 2 | Wireframes and visual system&#10;Build | Weeks 3-5 | Frontend, backend, and content integration"
+        />
+        <p className="mt-2 text-xs text-zinc-500">
+          One item per line using: phase | period | description
+        </p>
+      </div>
+
+      <div className="md:col-span-2">
+        <label className="label">Process gallery</label>
+        <textarea
+          className="text-field min-h-36"
+          value={project.galleryInput}
+          onChange={(event) => onChange('galleryInput', event.target.value)}
+          placeholder="/images/project-1.jpg | Early moodboard and references | Moodboard for the project&#10;/images/project-1.jpg | Interface exploration and layout passes | Layout exploration&#10;/images/project-1.jpg | Final polish and launch-ready visuals | Final visuals"
+        />
+        <p className="mt-2 text-xs text-zinc-500">
+          One item per line using: image path | caption | alt text
+        </p>
       </div>
     </div>
 

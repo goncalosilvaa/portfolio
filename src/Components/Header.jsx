@@ -26,7 +26,7 @@ const Header = () => {
           <Navbar navOpen={navOpen} onNavigate={() => setNavOpen(false)} />
         </div>
 
-        <a href="#contact" className="btn btn-secondary max-md:hidden md:justify-self-end">
+        <a href="/#contact" className="btn btn-secondary max-md:hidden md:justify-self-end">
           Contact me
         </a>
       </div>

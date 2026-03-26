@@ -4,27 +4,27 @@ import PropTypes from 'prop-types';
 const navItems = [
   {
     label: 'Home',
-    link: '#home',
+    link: '/#home',
     className: 'nav-link active',
   },
   {
     label: 'About',
-    link: '#about',
+    link: '/#about',
     className: 'nav-link',
   },
   {
     label: 'Work',
-    link: '#work',
+    link: '/#work',
     className: 'nav-link',
   },
   {
     label: 'Reviews',
-    link: '#reviews',
+    link: '/#reviews',
     className: 'nav-link',
   },
   {
     label: 'Contact',
-    link: '#contact',
+    link: '/#contact',
     className: 'nav-link md:hidden',
   },
 ];

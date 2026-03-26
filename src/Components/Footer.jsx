@@ -12,23 +12,23 @@ import { ButtonPrimary } from "./Button";
 const sitemap = [
     {
       label: 'Home',
-      href: '#home'
+      href: '/#home'
     },
     {
       label: 'About',
-      href: '#about'
+      href: '/#about'
     },
     {
       label: 'Work',
-      href: '#work'
+      href: '/#work'
     },
     {
       label: 'Reviews',
-      href: '#reviews'
+      href: '/#reviews'
     },
     {
       label: 'Contact me',
-      href: '#contact'
+      href: '/#contact'
     }
   ];
   

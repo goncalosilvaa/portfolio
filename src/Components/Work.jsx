@@ -27,11 +27,11 @@ const Work = ({ projects, dataError, onProjectView, onProjectClick }) => {
               <ProjectCard
                 key={project.id}
                 projectId={project.id}
+                detailPath={`/projects/${project.id}`}
                 imgSrc={project.image}
                 title={project.title}
                 summary={project.summary}
                 tags={project.tags}
-                projectLink={project.link}
                 classes="reveal-up"
                 onVisible={onProjectView}
                 onClick={onProjectClick}

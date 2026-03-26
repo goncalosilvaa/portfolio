@@ -67,6 +67,78 @@ function normalizeTags(value) {
   return [];
 }
 
+function normalizePalette(value) {
+  if (Array.isArray(value)) {
+    return value.map((color) => sanitizeText(color)).filter(Boolean).slice(0, 8);
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map((color) => sanitizeText(color))
+      .filter(Boolean)
+      .slice(0, 8);
+  }
+
+  return [];
+}
+
+function normalizeTimeline(timeline = [], fallbackTitle) {
+  const fallbackTimeline = [
+    {
+      phase: 'Discovery',
+      period: 'Week 1',
+      summary: `Framing the scope, references, and direction for ${fallbackTitle}.`,
+    },
+    {
+      phase: 'Design',
+      period: 'Week 2',
+      summary: `Shaping the interface, hierarchy, and user journey for ${fallbackTitle}.`,
+    },
+    {
+      phase: 'Build',
+      period: 'Weeks 3-5',
+      summary: `Implementing the experience, refining details, and preparing ${fallbackTitle} for launch.`,
+    },
+  ];
+
+  if (!Array.isArray(timeline) || !timeline.length) {
+    return fallbackTimeline;
+  }
+
+  return timeline
+    .map((entry, index) => ({
+      phase: sanitizeText(entry?.phase, `Phase ${index + 1}`),
+      period: sanitizeText(entry?.period, 'In progress'),
+      summary: sanitizeText(entry?.summary, 'More details coming soon.'),
+    }))
+    .filter((entry) => entry.phase || entry.period || entry.summary)
+    .slice(0, 8);
+}
+
+function normalizeGallery(gallery = [], fallbackImage, fallbackTitle) {
+  const fallbackGallery = [
+    {
+      src: fallbackImage,
+      alt: `${fallbackTitle} hero preview`,
+      caption: 'Primary showcase image for the project.',
+    },
+  ];
+
+  if (!Array.isArray(gallery) || !gallery.length) {
+    return fallbackGallery;
+  }
+
+  return gallery
+    .map((entry, index) => ({
+      src: sanitizeText(entry?.src, fallbackImage),
+      alt: sanitizeText(entry?.alt, `${fallbackTitle} gallery image ${index + 1}`),
+      caption: sanitizeText(entry?.caption, `Process image ${index + 1}`),
+    }))
+    .filter((entry) => entry.src)
+    .slice(0, 12);
+}
+
 function normalizeProjects(projects = []) {
   const now = new Date().toISOString();
   const usedIds = new Set();
@@ -83,13 +155,44 @@ function normalizeProjects(projects = []) {
 
     usedIds.add(nextId);
 
+    const title = sanitizeText(project.title, `Project ${index + 1}`);
+    const summary = sanitizeText(project.summary, 'Project summary coming soon.');
+    const image = sanitizeText(project.image, '/images/project-1.jpg');
+    const tags = normalizeTags(project.tags);
+
     return {
       id: nextId,
-      title: sanitizeText(project.title, `Project ${index + 1}`),
-      summary: sanitizeText(project.summary, 'Project summary coming soon.'),
-      image: sanitizeText(project.image, '/images/project-1.jpg'),
+      title,
+      headline: sanitizeText(
+        project.headline,
+        `A closer look at how ${title} moved from concept to final build.`
+      ),
+      summary,
+      overview: sanitizeText(
+        project.overview,
+        `${summary} This case study brings together the idea, the design decisions, and the final execution behind ${title}.`
+      ),
+      idea: sanitizeText(
+        project.idea,
+        `The goal for ${title} was to create a focused experience with clear value, confident interaction patterns, and a direction that could hold up from first concept to final delivery.`
+      ),
+      design: sanitizeText(
+        project.design,
+        `The design direction for ${title} balances clarity, hierarchy, and visual identity so the interface feels polished while still staying practical to build and maintain.`
+      ),
+      outcome: sanitizeText(
+        project.outcome,
+        `${title} was shaped into a portfolio-ready piece with a strong narrative, cohesive UI, and a structure that makes the work easy to understand for future clients or recruiters.`
+      ),
+      image,
       link: sanitizeText(project.link),
-      tags: normalizeTags(project.tags),
+      year: sanitizeText(project.year, `${new Date().getFullYear()}`),
+      duration: sanitizeText(project.duration, '4 to 6 weeks'),
+      role: sanitizeText(project.role, 'Design and development'),
+      tags,
+      palette: normalizePalette(project.palette),
+      timeline: normalizeTimeline(project.timeline, title),
+      gallery: normalizeGallery(project.gallery, image, title),
       published: project.published !== false,
       createdAt: project.createdAt || now,
       updatedAt: now,

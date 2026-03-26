@@ -3,11 +3,11 @@ import PropTypes from 'prop-types';
 
 const ProjectCard = ({
   projectId,
+  detailPath,
   imgSrc,
   title,
   summary,
   tags,
-  projectLink,
   classes = '',
   onVisible,
   onClick,
@@ -71,27 +71,23 @@ const ProjectCard = ({
         </div>
       </div>
 
-      {projectLink ? (
-        <a
-          href={projectLink}
-          target="_blank"
-          rel="noreferrer"
-          onClick={() => onClick(projectId)}
-          className="absolute inset-0"
-          aria-label={`Open ${title}`}
-        />
-      ) : null}
+      <a
+        href={detailPath}
+        onClick={() => onClick(projectId)}
+        className="absolute inset-0"
+        aria-label={`Open case study for ${title}`}
+      />
     </div>
   );
 };
 
 ProjectCard.propTypes = {
   projectId: PropTypes.string.isRequired,
+  detailPath: PropTypes.string.isRequired,
   imgSrc: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
   summary: PropTypes.string.isRequired,
   tags: PropTypes.arrayOf(PropTypes.string).isRequired,
-  projectLink: PropTypes.string,
   classes: PropTypes.string,
   onVisible: PropTypes.func.isRequired,
   onClick: PropTypes.func.isRequired,
