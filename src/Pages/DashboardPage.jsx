@@ -11,6 +11,39 @@ import {
   updateAdminCredentials,
 } from '../lib/api';
 
+const dashboardSections = [
+  {
+    id: 'overview',
+    eyebrow: 'Dashboard',
+    label: 'Overview',
+    description: 'Traffic, highlights, and a quick summary of the current portfolio content.',
+  },
+  {
+    id: 'projects',
+    eyebrow: 'Content',
+    label: 'Projects',
+    description: 'Create, edit, or remove the projects shown on the public site.',
+  },
+  {
+    id: 'skills',
+    eyebrow: 'Content',
+    label: 'Skills',
+    description: 'Keep your stack current with dedicated controls for skills.',
+  },
+  {
+    id: 'reviews',
+    eyebrow: 'Content',
+    label: 'Reviews',
+    description: 'Manage testimonials from a separate and clearer workflow.',
+  },
+  {
+    id: 'security',
+    eyebrow: 'Access',
+    label: 'Security',
+    description: 'Update the dashboard username and password.',
+  },
+];
+
 const defaultAnalytics = {
   totals: {
     uniqueVisitors: 0,
@@ -24,6 +57,31 @@ const defaultAnalytics = {
   recentVisitors: [],
   recentActivity: [],
 };
+
+const saveMessages = {
+  projects: 'Projects saved successfully.',
+  skills: 'Skills saved successfully.',
+  reviews: 'Reviews saved successfully.',
+};
+
+function getSectionFromHash(hash) {
+  const normalizedHash = `${hash || ''}`.replace(/^#/, '').trim().toLowerCase();
+  return dashboardSections.some((section) => section.id === normalizedHash)
+    ? normalizedHash
+    : 'overview';
+}
+
+function getCurrentSection() {
+  if (typeof window === 'undefined') {
+    return 'overview';
+  }
+
+  return getSectionFromHash(window.location.hash);
+}
+
+function getSectionConfig(sectionId) {
+  return dashboardSections.find((section) => section.id === sectionId) || dashboardSections[0];
+}
 
 function buildEmptyProject() {
   return {
@@ -118,6 +176,28 @@ Panel.propTypes = {
   className: PropTypes.string,
 };
 
+const NoticeBanner = ({ notice }) => {
+  if (!notice) {
+    return null;
+  }
+
+  const toneClassName =
+    notice.tone === 'error'
+      ? 'border-rose-500/30 bg-rose-500/10 text-rose-100'
+      : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100';
+
+  return (
+    <div className={`rounded-2xl border px-4 py-4 text-sm ${toneClassName}`}>{notice.message}</div>
+  );
+};
+
+NoticeBanner.propTypes = {
+  notice: PropTypes.shape({
+    tone: PropTypes.oneOf(['success', 'error']).isRequired,
+    message: PropTypes.string.isRequired,
+  }),
+};
+
 const MetricCard = ({ label, value, hint }) => (
   <div className="dashboard-panel p-5">
     <p className="text-sm text-zinc-400">{label}</p>
@@ -130,6 +210,50 @@ MetricCard.propTypes = {
   label: PropTypes.string.isRequired,
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   hint: PropTypes.string.isRequired,
+};
+
+const ContentSummaryCard = ({ label, value, hint }) => (
+  <div className="rounded-[24px] border border-zinc-800/70 bg-zinc-950/40 p-5">
+    <p className="text-sm text-zinc-400">{label}</p>
+    <p className="mt-3 text-3xl font-semibold text-zinc-50">{value}</p>
+    <p className="mt-2 text-sm text-zinc-500">{hint}</p>
+  </div>
+);
+
+ContentSummaryCard.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  hint: PropTypes.string.isRequired,
+};
+
+const SidebarLink = ({ section, activeSection, badge }) => (
+  <a
+    href={section.id === 'overview' ? '#overview' : `#${section.id}`}
+    className={`dashboard-sidebar-link ${activeSection === section.id ? 'active' : ''}`}
+  >
+    <div>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-current/60">
+        {section.eyebrow}
+      </p>
+      <p className="mt-1 text-sm font-medium text-current">{section.label}</p>
+    </div>
+
+    {typeof badge === 'number' ? (
+      <span className="dashboard-sidebar-badge">{badge}</span>
+    ) : (
+      <span className="text-current/40">/</span>
+    )}
+  </a>
+);
+
+SidebarLink.propTypes = {
+  section: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    eyebrow: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+  }).isRequired,
+  activeSection: PropTypes.string.isRequired,
+  badge: PropTypes.number,
 };
 
 const TimelineChart = ({ timeline }) => {
@@ -195,7 +319,11 @@ TimelineChart.propTypes = {
 
 const ProjectLeaderboard = ({ projects }) => {
   if (!projects.length) {
-    return <div className="dashboard-empty">Project performance will appear here after the first views.</div>;
+    return (
+      <div className="dashboard-empty">
+        Project performance will appear here after the first views.
+      </div>
+    );
   }
 
   return (
@@ -600,7 +728,10 @@ const LoginScreen = ({ form, loading, error, onChange, onSubmit }) => (
           First access credentials can be changed later in the security panel.
         </div>
 
-        <a href="/" className="inline-flex mt-6 text-sm text-zinc-400 hover:text-zinc-200 transition-colors">
+        <a
+          href="/"
+          className="inline-flex mt-6 text-sm text-zinc-400 hover:text-zinc-200 transition-colors"
+        >
           Back to portfolio
         </a>
       </div>
@@ -618,6 +749,7 @@ LoginScreen.propTypes = {
 
 const DashboardPage = () => {
   const [authState, setAuthState] = useState(adminSession.getToken() ? 'checking' : 'logged_out');
+  const [activeSection, setActiveSection] = useState(getCurrentSection);
   const [username, setUsername] = useState('');
   const [storageMode, setStorageMode] = useState('loading');
   const [content, setContent] = useState({ projects: [], skills: [], reviews: [] });
@@ -631,11 +763,11 @@ const DashboardPage = () => {
   });
   const [dashboardError, setDashboardError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
-  const [savingContent, setSavingContent] = useState(false);
+  const [savingSection, setSavingSection] = useState('');
   const [refreshingAnalytics, setRefreshingAnalytics] = useState(false);
   const [updatingCredentials, setUpdatingCredentials] = useState(false);
-  const [contentNotice, setContentNotice] = useState('');
-  const [securityNotice, setSecurityNotice] = useState('');
+  const [editorNotice, setEditorNotice] = useState(null);
+  const [securityNotice, setSecurityNotice] = useState(null);
 
   async function syncDashboard() {
     const [contentResponse, analyticsResponse] = await Promise.all([
@@ -670,7 +802,25 @@ const DashboardPage = () => {
       });
   }, [authState]);
 
+  useEffect(() => {
+    const syncActiveSection = () => {
+      setActiveSection(getCurrentSection());
+    };
+
+    syncActiveSection();
+    window.addEventListener('hashchange', syncActiveSection);
+
+    return () => {
+      window.removeEventListener('hashchange', syncActiveSection);
+    };
+  }, []);
+
+  function clearEditorFeedback() {
+    setEditorNotice(null);
+  }
+
   function updateProject(index, field, value) {
+    clearEditorFeedback();
     setContent((current) => ({
       ...current,
       projects: current.projects.map((project, itemIndex) =>
@@ -680,6 +830,7 @@ const DashboardPage = () => {
   }
 
   function updateSkill(index, field, value) {
+    clearEditorFeedback();
     setContent((current) => ({
       ...current,
       skills: current.skills.map((skill, itemIndex) =>
@@ -689,6 +840,7 @@ const DashboardPage = () => {
   }
 
   function updateReview(index, field, value) {
+    clearEditorFeedback();
     setContent((current) => ({
       ...current,
       reviews: current.reviews.map((review, itemIndex) =>
@@ -698,6 +850,7 @@ const DashboardPage = () => {
   }
 
   function removeProject(index) {
+    clearEditorFeedback();
     setContent((current) => ({
       ...current,
       projects: current.projects.filter((_, itemIndex) => itemIndex !== index),
@@ -705,6 +858,7 @@ const DashboardPage = () => {
   }
 
   function removeSkill(index) {
+    clearEditorFeedback();
     setContent((current) => ({
       ...current,
       skills: current.skills.filter((_, itemIndex) => itemIndex !== index),
@@ -712,9 +866,34 @@ const DashboardPage = () => {
   }
 
   function removeReview(index) {
+    clearEditorFeedback();
     setContent((current) => ({
       ...current,
       reviews: current.reviews.filter((_, itemIndex) => itemIndex !== index),
+    }));
+  }
+
+  function addProject() {
+    clearEditorFeedback();
+    setContent((current) => ({
+      ...current,
+      projects: [...current.projects, buildEmptyProject()],
+    }));
+  }
+
+  function addSkill() {
+    clearEditorFeedback();
+    setContent((current) => ({
+      ...current,
+      skills: [...current.skills, buildEmptySkill()],
+    }));
+  }
+
+  function addReview() {
+    clearEditorFeedback();
+    setContent((current) => ({
+      ...current,
+      reviews: [...current.reviews, buildEmptyReview()],
     }));
   }
 
@@ -737,25 +916,32 @@ const DashboardPage = () => {
     }
   }
 
-  async function handleSaveContent() {
-    setSavingContent(true);
-    setContentNotice('');
+  async function handleSaveContent(section) {
+    setSavingSection(section);
+    setEditorNotice(null);
 
     try {
       const response = await saveAdminContent(serializeContent(content));
       setContent(hydrateContentForForm(response.content));
       setStorageMode(response.storage || storageMode);
       setUsername(response.admin.username);
-      setContentNotice('Projects, skills, and reviews saved successfully.');
+      setEditorNotice({
+        tone: 'success',
+        message: saveMessages[section] || 'Content saved successfully.',
+      });
     } catch (error) {
-      setContentNotice(error.message);
+      setEditorNotice({
+        tone: 'error',
+        message: error.message,
+      });
     } finally {
-      setSavingContent(false);
+      setSavingSection('');
     }
   }
 
   async function handleRefreshAnalytics() {
     setRefreshingAnalytics(true);
+    setDashboardError('');
 
     try {
       const response = await getAdminAnalytics();
@@ -770,10 +956,13 @@ const DashboardPage = () => {
 
   async function handleCredentialsUpdate(event) {
     event.preventDefault();
-    setSecurityNotice('');
+    setSecurityNotice(null);
 
     if (credentialsForm.nextPassword && credentialsForm.nextPassword !== credentialsForm.confirmPassword) {
-      setSecurityNotice('The new password confirmation does not match.');
+      setSecurityNotice({
+        tone: 'error',
+        message: 'The new password confirmation does not match.',
+      });
       return;
     }
 
@@ -788,7 +977,10 @@ const DashboardPage = () => {
 
       setStorageMode(response.storage || storageMode);
       setUsername(response.admin.username);
-      setSecurityNotice('Credentials updated successfully.');
+      setSecurityNotice({
+        tone: 'success',
+        message: 'Credentials updated successfully.',
+      });
       setCredentialsForm({
         currentPassword: '',
         nextUsername: response.admin.username,
@@ -796,7 +988,10 @@ const DashboardPage = () => {
         confirmPassword: '',
       });
     } catch (error) {
-      setSecurityNotice(error.message);
+      setSecurityNotice({
+        tone: 'error',
+        message: error.message,
+      });
     } finally {
       setUpdatingCredentials(false);
     }
@@ -808,53 +1003,17 @@ const DashboardPage = () => {
     setContent({ projects: [], skills: [], reviews: [] });
     setAnalytics(defaultAnalytics);
     setDashboardError('');
-    setContentNotice('');
-    setSecurityNotice('');
+    setEditorNotice(null);
+    setSecurityNotice(null);
   }
 
-  if (authState === 'checking') {
+  function renderOverviewSection() {
     return (
-      <main className="dashboard-shell min-h-screen flex items-center">
-        <div className="container">
-          <div className="max-w-xl mx-auto dashboard-panel text-center">
-            <p className="text-sm text-zinc-400">Loading dashboard...</p>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  if (authState !== 'authenticated') {
-    return (
-      <LoginScreen
-        form={loginForm}
-        loading={loginLoading}
-        error={dashboardError}
-        onChange={(field, value) => setLoginForm((current) => ({ ...current, [field]: value }))}
-        onSubmit={handleLogin}
-      />
-    );
-  }
-
-  return (
-    <main className="dashboard-shell min-h-screen pb-12">
-      <div className="container pt-8 space-y-6">
-        <section className="dashboard-panel">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-sky-300/80">
-                Private area
-              </p>
-              <h1 className="headline-2 mt-3">Portfolio control center</h1>
-              <p className="dashboard-muted mt-3 max-w-[65ch]">
-                Signed in as <span className="text-zinc-200">{username}</span>. Update portfolio
-                content, client reviews, and monitor anonymous traffic from one dashboard.
-              </p>
-              <p className="dashboard-muted mt-2">
-                Active storage mode: <span className="text-zinc-200">{storageMode}</span>
-              </p>
-            </div>
-
+      <>
+        <Panel
+          title="Portfolio control center"
+          description={`Signed in as ${username}. Track activity, review the current content mix, and jump into each management area from the sidebar.`}
+          actions={
             <div className="flex flex-wrap items-center gap-3">
               <a href="/" className="btn btn-outline">
                 View public site
@@ -863,8 +1022,35 @@ const DashboardPage = () => {
                 Sign out
               </button>
             </div>
+          }
+        >
+          <div className="grid gap-4 md:grid-cols-3">
+            <ContentSummaryCard
+              label="Projects"
+              value={content.projects.length}
+              hint="Items currently managed from the private area."
+            />
+            <ContentSummaryCard
+              label="Skills"
+              value={content.skills.length}
+              hint="Core tools and capabilities visible on the public site."
+            />
+            <ContentSummaryCard
+              label="Reviews"
+              value={content.reviews.length}
+              hint="Testimonials stored and ready to publish."
+            />
           </div>
-        </section>
+
+          <div className="mt-6 rounded-[24px] border border-zinc-800/70 bg-zinc-950/40 p-5">
+            <p className="text-sm text-zinc-400">Active storage mode</p>
+            <p className="mt-2 text-xl font-semibold text-zinc-50">{storageMode}</p>
+            <p className="dashboard-muted mt-2">
+              Content updates are separated into dedicated pages in the sidebar so each workflow is
+              easier to manage without everything living in a single screen.
+            </p>
+          </div>
+        </Panel>
 
         <section className="dashboard-grid xl:grid-cols-5">
           <MetricCard
@@ -928,231 +1114,362 @@ const DashboardPage = () => {
             <RecentVisitors visitors={analytics.recentVisitors} />
           </Panel>
 
-          <Panel
-            title="Recent activity"
-            description="Latest tracked actions happening on the site."
-          >
+          <Panel title="Recent activity" description="Latest tracked actions happening on the site.">
             <RecentActivity items={analytics.recentActivity} />
           </Panel>
         </div>
+      </>
+    );
+  }
 
-        <Panel
-          title="Projects"
-          description="Add, remove, or update the portfolio projects that appear on the public site."
-          actions={
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                className="btn btn-outline"
-                onClick={() =>
-                  setContent((current) => ({
-                    ...current,
-                    projects: [...current.projects, buildEmptyProject()],
-                  }))
-                }
-              >
-                Add project
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleSaveContent}
-                disabled={savingContent}
-              >
-                {savingContent ? 'Saving...' : 'Save changes'}
-              </button>
-            </div>
-          }
-        >
-          <div className="space-y-4">
-            {content.projects.map((project, index) => (
-              <ProjectEditor
-                key={project.id || `project-${index}`}
-                project={project}
-                index={index}
-                onChange={(field, value) => updateProject(index, field, value)}
-                onRemove={() => removeProject(index)}
-              />
-            ))}
-
-            {!content.projects.length ? (
-              <div className="dashboard-empty">No projects yet. Add your first one to start populating the site.</div>
-            ) : null}
+  function renderProjectsSection() {
+    return (
+      <Panel
+        title="Projects"
+        description="Add, remove, or update the portfolio projects that appear on the public site."
+        actions={
+          <div className="flex flex-wrap gap-3">
+            <button type="button" className="btn btn-outline" onClick={addProject}>
+              Add project
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => handleSaveContent('projects')}
+              disabled={savingSection === 'projects'}
+            >
+              {savingSection === 'projects' ? 'Saving...' : 'Save projects'}
+            </button>
           </div>
+        }
+      >
+        <div className="space-y-4">
+          <NoticeBanner notice={editorNotice} />
 
-          {contentNotice ? (
-            <div className="mt-5 rounded-2xl border border-zinc-800/70 bg-zinc-950/50 px-4 py-4 text-sm text-zinc-300">
-              {contentNotice}
+          {content.projects.map((project, index) => (
+            <ProjectEditor
+              key={project.id || `project-${index}`}
+              project={project}
+              index={index}
+              onChange={(field, value) => updateProject(index, field, value)}
+              onRemove={() => removeProject(index)}
+            />
+          ))}
+
+          {!content.projects.length ? (
+            <div className="dashboard-empty">
+              No projects yet. Add your first one to start populating the site.
             </div>
           ) : null}
-        </Panel>
-
-        <div className="grid gap-6 xl:grid-cols-2">
-          <Panel
-            title="Skills"
-            description="Keep your stack current and control how each skill appears on the site."
-            actions={
-              <button
-                type="button"
-                className="btn btn-outline"
-                onClick={() =>
-                  setContent((current) => ({
-                    ...current,
-                    skills: [...current.skills, buildEmptySkill()],
-                  }))
-                }
-              >
-                Add skill
-              </button>
-            }
-          >
-            <div className="space-y-4">
-              {content.skills.map((skill, index) => (
-                <SkillEditor
-                  key={skill.id || `skill-${index}`}
-                  skill={skill}
-                  index={index}
-                  onChange={(field, value) => updateSkill(index, field, value)}
-                  onRemove={() => removeSkill(index)}
-                />
-              ))}
-
-              {!content.skills.length ? (
-                <div className="dashboard-empty">No skills yet. Add the technologies you want to highlight.</div>
-              ) : null}
-            </div>
-          </Panel>
-
-          <Panel
-            title="Reviews"
-            description="Publish client testimonials directly from the private area."
-            actions={
-              <button
-                type="button"
-                className="btn btn-outline"
-                onClick={() =>
-                  setContent((current) => ({
-                    ...current,
-                    reviews: [...current.reviews, buildEmptyReview()],
-                  }))
-                }
-              >
-                Add review
-              </button>
-            }
-          >
-            <div className="space-y-4">
-              {content.reviews.map((review, index) => (
-                <ReviewEditor
-                  key={review.id || `review-${index}`}
-                  review={review}
-                  index={index}
-                  onChange={(field, value) => updateReview(index, field, value)}
-                  onRemove={() => removeReview(index)}
-                />
-              ))}
-
-              {!content.reviews.length ? (
-                <div className="dashboard-empty">No reviews yet. Add testimonials to build trust on the public site.</div>
-              ) : null}
-            </div>
-          </Panel>
         </div>
 
-        <Panel
-          title="Security"
-          description="Change the dashboard username and password after the first login."
-        >
-          <form className="grid gap-4 md:grid-cols-2" onSubmit={handleCredentialsUpdate}>
-            <div>
-              <label htmlFor="currentPassword" className="label">
-                Current password
-              </label>
-              <input
-                id="currentPassword"
-                className="text-field"
-                type="password"
-                autoComplete="current-password"
-                value={credentialsForm.currentPassword}
-                onChange={(event) =>
-                  setCredentialsForm((current) => ({
-                    ...current,
-                    currentPassword: event.target.value,
-                  }))
-                }
-              />
+        <p className="dashboard-muted mt-5">
+          Saving this page persists the full content document, including any pending edits you may
+          have made in other content sections.
+        </p>
+      </Panel>
+    );
+  }
+
+  function renderSkillsSection() {
+    return (
+      <Panel
+        title="Skills"
+        description="Edit, add, or remove stack items from a dedicated page instead of one crowded dashboard."
+        actions={
+          <div className="flex flex-wrap gap-3">
+            <button type="button" className="btn btn-outline" onClick={addSkill}>
+              Add skill
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => handleSaveContent('skills')}
+              disabled={savingSection === 'skills'}
+            >
+              {savingSection === 'skills' ? 'Saving...' : 'Save skills'}
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <NoticeBanner notice={editorNotice} />
+
+          {content.skills.map((skill, index) => (
+            <SkillEditor
+              key={skill.id || `skill-${index}`}
+              skill={skill}
+              index={index}
+              onChange={(field, value) => updateSkill(index, field, value)}
+              onRemove={() => removeSkill(index)}
+            />
+          ))}
+
+          {!content.skills.length ? (
+            <div className="dashboard-empty">
+              No skills yet. Add the technologies you want to highlight.
+            </div>
+          ) : null}
+        </div>
+
+        <p className="dashboard-muted mt-5">
+          This page now has its own save action, so updating skills no longer depends on going back
+          to the projects section.
+        </p>
+      </Panel>
+    );
+  }
+
+  function renderReviewsSection() {
+    return (
+      <Panel
+        title="Reviews"
+        description="Publish client testimonials from a separate page with a clearer add, edit, remove, and save flow."
+        actions={
+          <div className="flex flex-wrap gap-3">
+            <button type="button" className="btn btn-outline" onClick={addReview}>
+              Add review
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => handleSaveContent('reviews')}
+              disabled={savingSection === 'reviews'}
+            >
+              {savingSection === 'reviews' ? 'Saving...' : 'Save reviews'}
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <NoticeBanner notice={editorNotice} />
+
+          {content.reviews.map((review, index) => (
+            <ReviewEditor
+              key={review.id || `review-${index}`}
+              review={review}
+              index={index}
+              onChange={(field, value) => updateReview(index, field, value)}
+              onRemove={() => removeReview(index)}
+            />
+          ))}
+
+          {!content.reviews.length ? (
+            <div className="dashboard-empty">
+              No reviews yet. Add testimonials to build trust on the public site.
+            </div>
+          ) : null}
+        </div>
+
+        <p className="dashboard-muted mt-5">
+          Reviews now save from their own page, so editing testimonials is no longer hidden behind
+          the projects workflow.
+        </p>
+      </Panel>
+    );
+  }
+
+  function renderSecuritySection() {
+    return (
+      <Panel
+        title="Security"
+        description="Change the dashboard username and password after the first login."
+      >
+        <NoticeBanner notice={securityNotice} />
+
+        <form className="grid gap-4 md:grid-cols-2 mt-4" onSubmit={handleCredentialsUpdate}>
+          <div>
+            <label htmlFor="currentPassword" className="label">
+              Current password
+            </label>
+            <input
+              id="currentPassword"
+              className="text-field"
+              type="password"
+              autoComplete="current-password"
+              value={credentialsForm.currentPassword}
+              onChange={(event) =>
+                setCredentialsForm((current) => ({
+                  ...current,
+                  currentPassword: event.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div>
+            <label htmlFor="nextUsername" className="label">
+              New username
+            </label>
+            <input
+              id="nextUsername"
+              className="text-field"
+              type="text"
+              autoComplete="username"
+              value={credentialsForm.nextUsername}
+              onChange={(event) =>
+                setCredentialsForm((current) => ({
+                  ...current,
+                  nextUsername: event.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div>
+            <label htmlFor="nextPassword" className="label">
+              New password
+            </label>
+            <input
+              id="nextPassword"
+              className="text-field"
+              type="password"
+              autoComplete="new-password"
+              value={credentialsForm.nextPassword}
+              onChange={(event) =>
+                setCredentialsForm((current) => ({
+                  ...current,
+                  nextPassword: event.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div>
+            <label htmlFor="confirmPassword" className="label">
+              Confirm new password
+            </label>
+            <input
+              id="confirmPassword"
+              className="text-field"
+              type="password"
+              autoComplete="new-password"
+              value={credentialsForm.confirmPassword}
+              onChange={(event) =>
+                setCredentialsForm((current) => ({
+                  ...current,
+                  confirmPassword: event.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div className="md:col-span-2 flex flex-wrap items-center gap-3">
+            <button type="submit" className="btn btn-primary" disabled={updatingCredentials}>
+              {updatingCredentials ? 'Updating...' : 'Update credentials'}
+            </button>
+          </div>
+        </form>
+      </Panel>
+    );
+  }
+
+  function renderActiveSection() {
+    switch (activeSection) {
+      case 'projects':
+        return renderProjectsSection();
+      case 'skills':
+        return renderSkillsSection();
+      case 'reviews':
+        return renderReviewsSection();
+      case 'security':
+        return renderSecuritySection();
+      case 'overview':
+      default:
+        return renderOverviewSection();
+    }
+  }
+
+  if (authState === 'checking') {
+    return (
+      <main className="dashboard-shell min-h-screen flex items-center">
+        <div className="container">
+          <div className="max-w-xl mx-auto dashboard-panel text-center">
+            <p className="text-sm text-zinc-400">Loading dashboard...</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (authState !== 'authenticated') {
+    return (
+      <LoginScreen
+        form={loginForm}
+        loading={loginLoading}
+        error={dashboardError}
+        onChange={(field, value) => setLoginForm((current) => ({ ...current, [field]: value }))}
+        onSubmit={handleLogin}
+      />
+    );
+  }
+
+  const currentSection = getSectionConfig(activeSection);
+
+  return (
+    <main className="dashboard-shell min-h-screen pb-12">
+      <div className="container pt-8">
+        <div className="dashboard-layout">
+          <aside className="dashboard-sidebar">
+            <div className="px-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-300/80">
+                Private area
+              </p>
+              <h1 className="headline-2 mt-3">Portfolio dashboard</h1>
+              <p className="dashboard-muted mt-3">
+                Signed in as <span className="text-zinc-200">{username}</span>
+              </p>
             </div>
 
-            <div>
-              <label htmlFor="nextUsername" className="label">
-                New username
-              </label>
-              <input
-                id="nextUsername"
-                className="text-field"
-                type="text"
-                autoComplete="username"
-                value={credentialsForm.nextUsername}
-                onChange={(event) =>
-                  setCredentialsForm((current) => ({
-                    ...current,
-                    nextUsername: event.target.value,
-                  }))
-                }
-              />
+            <nav className="mt-6 space-y-2">
+              {dashboardSections.map((section) => (
+                <SidebarLink
+                  key={section.id}
+                  section={section}
+                  activeSection={activeSection}
+                  badge={
+                    section.id === 'projects'
+                      ? content.projects.length
+                      : section.id === 'skills'
+                        ? content.skills.length
+                        : section.id === 'reviews'
+                          ? content.reviews.length
+                          : undefined
+                  }
+                />
+              ))}
+            </nav>
+
+            <div className="mt-6 rounded-[24px] border border-zinc-800/70 bg-zinc-950/40 p-5">
+              <p className="text-sm text-zinc-400">Current page</p>
+              <p className="mt-2 text-lg font-semibold text-zinc-50">{currentSection.label}</p>
+              <p className="dashboard-muted mt-2">{currentSection.description}</p>
             </div>
 
-            <div>
-              <label htmlFor="nextPassword" className="label">
-                New password
-              </label>
-              <input
-                id="nextPassword"
-                className="text-field"
-                type="password"
-                autoComplete="new-password"
-                value={credentialsForm.nextPassword}
-                onChange={(event) =>
-                  setCredentialsForm((current) => ({
-                    ...current,
-                    nextPassword: event.target.value,
-                  }))
-                }
-              />
-            </div>
-
-            <div>
-              <label htmlFor="confirmPassword" className="label">
-                Confirm new password
-              </label>
-              <input
-                id="confirmPassword"
-                className="text-field"
-                type="password"
-                autoComplete="new-password"
-                value={credentialsForm.confirmPassword}
-                onChange={(event) =>
-                  setCredentialsForm((current) => ({
-                    ...current,
-                    confirmPassword: event.target.value,
-                  }))
-                }
-              />
-            </div>
-
-            <div className="md:col-span-2 flex flex-wrap items-center gap-3">
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+              <a href="/" className="btn btn-outline w-full justify-center">
+                View public site
+              </a>
               <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={updatingCredentials}
+                type="button"
+                className="btn btn-primary w-full justify-center"
+                onClick={handleLogout}
               >
-                {updatingCredentials ? 'Updating...' : 'Update credentials'}
+                Sign out
               </button>
-
-              {securityNotice ? <p className="text-sm text-zinc-300">{securityNotice}</p> : null}
             </div>
-          </form>
-        </Panel>
+          </aside>
+
+          <div className="space-y-6">
+            {dashboardError ? (
+              <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-4 text-sm text-rose-100">
+                {dashboardError}
+              </div>
+            ) : null}
+
+            {renderActiveSection()}
+          </div>
+        </div>
       </div>
     </main>
   );
